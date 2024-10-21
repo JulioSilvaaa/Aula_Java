@@ -1,0 +1,171 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+
+public class JogoDaVelha extends JFrame {
+    private JButton[][] board = new JButton[3][3];
+    private JLabel scoreLabel;
+    private JTextField player1Name, player2Name;
+    private JCheckBox playWithComputer;
+    private String player1, player2;
+    private boolean vsComputer;
+    private int player1Score = 0, player2Score = 0;
+    private boolean player1Turn = true;
+
+    public JogoDaVelha() {
+        // Configuração da tela inicial
+        setTitle("Jogo da Velha");
+        setSize(400, 450);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+
+        // Tela inicial com nomes dos jogadores e opção de jogar com o computador
+        JPanel startPanel = new JPanel();
+        startPanel.setLayout(new GridLayout(4, 2));
+
+        JLabel player1Label = new JLabel("Nome do Jogador 1:");
+        player1Name = new JTextField();
+        JLabel player2Label = new JLabel("Nome do Jogador 2:");
+        player2Name = new JTextField();
+
+        playWithComputer = new JCheckBox("Jogar contra o computador");
+        playWithComputer.addActionListener(e -> player2Name.setEnabled(!playWithComputer.isSelected()));
+
+        JButton startButton = new JButton("Iniciar Jogo");
+        startButton.addActionListener(e -> iniciarJogo());
+
+        startPanel.add(player1Label);
+        startPanel.add(player1Name);
+        startPanel.add(player2Label);
+        startPanel.add(player2Name);
+        startPanel.add(playWithComputer);
+        startPanel.add(startButton);
+
+        add(startPanel);
+
+        // Configuração do layout do tabuleiro
+        JPanel boardPanel = new JPanel();
+        boardPanel.setLayout(new GridLayout(3, 3));
+
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                board[i][j] = new JButton("");
+                board[i][j].setFont(new Font("Arial", Font.PLAIN, 40));
+                board[i][j].setFocusPainted(false);
+                board[i][j].addActionListener(new ButtonClickListener(i, j));
+                boardPanel.add(board[i][j]);
+            }
+        }
+
+        scoreLabel = new JLabel("Placar: 0 - 0", JLabel.CENTER);
+        scoreLabel.setFont(new Font("Arial", Font.PLAIN, 20));
+
+        add(boardPanel, BorderLayout.CENTER);
+        add(scoreLabel, BorderLayout.SOUTH);
+    }
+
+    private void iniciarJogo() {
+        player1 = player1Name.getText();
+        player2 = playWithComputer.isSelected() ? "Computador" : player2Name.getText();
+        vsComputer = playWithComputer.isSelected();
+        resetBoard();
+    }
+
+    private void resetBoard() {
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                board[i][j].setText("");
+                board[i][j].setEnabled(true);
+            }
+        }
+        player1Turn = true;
+        scoreLabel.setText("Placar: " + player1Score + " - " + player2Score);
+    }
+
+    private boolean checkWinner() {
+        for (int i = 0; i < 3; i++) {
+            if (board[i][0].getText().equals(board[i][1].getText()) && board[i][1].getText().equals(board[i][2].getText()) && !board[i][0].getText().equals("")) {
+                return true;
+            }
+            if (board[0][i].getText().equals(board[1][i].getText()) && board[1][i].getText().equals(board[2][i].getText()) && !board[0][i].getText().equals("")) {
+                return true;
+            }
+        }
+        if (board[0][0].getText().equals(board[1][1].getText()) && board[1][1].getText().equals(board[2][2].getText()) && !board[0][0].getText().equals("")) {
+            return true;
+        }
+        if (board[0][2].getText().equals(board[1][1].getText()) && board[1][1].getText().equals(board[2][0].getText()) && !board[0][2].getText().equals("")) {
+            return true;
+        }
+        return false;
+    }
+
+    private boolean isBoardFull() {
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                if (board[i][j].getText().equals("")) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    private void computadorMove() {
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                if (board[i][j].getText().equals("")) {
+                    board[i][j].doClick();
+                    return;
+                }
+            }
+        }
+    }
+
+    private class ButtonClickListener implements ActionListener {
+        private int row, col;
+
+        public ButtonClickListener(int row, int col) {
+            this.row = row;
+            this.col = col;
+        }
+
+        public void actionPerformed(ActionEvent e) {
+            JButton button = board[row][col];
+            if (!button.getText().equals("")) return;
+
+            button.setText(player1Turn ? "X" : "O");
+            button.setEnabled(false);
+
+            if (checkWinner()) {
+                if (player1Turn) {
+                    player1Score++;
+                } else {
+                    player2Score++;
+                }
+                JOptionPane.showMessageDialog(null, (player1Turn ? player1 : player2) + " ganhou!");
+                resetBoard();
+                return;
+            }
+
+            if (isBoardFull()) {
+                JOptionPane.showMessageDialog(null, "Empate!");
+                resetBoard();
+                return;
+            }
+
+            player1Turn = !player1Turn;
+
+            if (vsComputer && !player1Turn) {
+                computadorMove();
+            }
+        }
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            JogoDaVelha game = new JogoDaVelha();
+            game.setVisible(true);
+        });
+    }
+}
